@@ -8,16 +8,16 @@ type UserLoginInfo struct {
 	IsActive bool
 }
 
-type UserProfile struct {
-	LoginInfo UserLoginInfo
-	LastLogin time.Time `ts:"string"`
-	Friends map[int]UserLoginInfo
+type UserBasicInfo struct {
+	Email string
 	Bio string
 }
 
-type UserBasicInfo struct {
+type UserProfile struct {
 	UserLoginInfo
-	Email string
+	Basic UserBasicInfo
+	LastLogin time.Time `ts:"string"`
+	Friends map[int]*UserLoginInfo
 }
 
 /*

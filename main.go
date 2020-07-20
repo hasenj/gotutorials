@@ -50,33 +50,31 @@ func TypescriptTypeName(t reflect.Type) string {
 	}
 }
 
-func ProcessType(linker *TypeLinker, t reflect.Type) {
-	var sinfo StructInfo
-	sinfo.Type = t
-	numFields := sinfo.Type.NumField()
+func addTypeFields(linker *TypeLinker, sinfo *StructInfo, t reflect.Type) {
+	numFields := t.NumField()
 	for index := 0; index < numFields; index++ {
-		field := sinfo.Type.Field(index)
+		field := t.Field(index)
 		// fmt.Printf("%#v\n", field)
+		if field.Anonymous {
+			addTypeFields(linker, sinfo, field.Type)
+			continue
+		}
 		var sfield StructFieldInfo
 		sfield.Name = field.Name
 		sfield.Type = field.Type
 		sfield.CustomType = field.Tag.Get("ts")
 
 		if sfield.CustomType == "" {
-			// see if we need to process another type referenced here directly or indirectly
-			// FIXME: maybe move this logic to QueueType
-			switch sfield.Type.Kind() {
-			case reflect.Struct:
-				QueueType(linker, sfield.Type)
-			case reflect.Ptr, reflect.Slice, reflect.Array:
-				QueueType(linker, sfield.Type.Elem())
-			case reflect.Map:
-				QueueType(linker, sfield.Type.Key())
-				QueueType(linker, sfield.Type.Elem())
-			}
+			QueueType(linker, sfield.Type)
 		}
 		sinfo.Fields = append(sinfo.Fields, sfield)
 	}
+}
+
+func ProcessType(linker *TypeLinker, t reflect.Type) {
+	var sinfo StructInfo
+	sinfo.Type = t
+	addTypeFields(linker, &sinfo, t)
 	linker.Structs = append(linker.Structs, sinfo)
 }
 
@@ -104,14 +102,20 @@ func QueueInstance(linker *TypeLinker, inst interface{}) {
 }
 
 func QueueType(linker *TypeLinker, t reflect.Type) {
-	if t.Kind() != reflect.Struct {
-		return
+	// see if we need to process another type referenced here directly or indirectly
+	switch t.Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Array:
+		QueueType(linker, t.Elem())
+	case reflect.Map:
+		QueueType(linker, t.Key())
+		QueueType(linker, t.Elem())
+	case reflect.Struct:
+		if linker.SeenTypes[t] {
+			return
+		}
+		linker.SeenTypes[t] = true
+		linker.Queue = append(linker.Queue, t)
 	}
-	if linker.SeenTypes[t] {
-		return
-	}
-	linker.SeenTypes[t] = true
-	linker.Queue = append(linker.Queue, t)
 }
 
 func Process(linker *TypeLinker) {
