@@ -13,6 +13,7 @@ type StructInfo struct {
 type StructFieldInfo struct {
 	Name string
 	Type reflect.Type
+	CustomType string
 }
 
 func TypescriptTypeName(t reflect.Type) string {
@@ -29,7 +30,9 @@ func GenerateTypeInfo(inst interface{}) *StructInfo {
 		sfield := StructFieldInfo {
 			Name: field.Name,
 			Type: field.Type,
+			CustomType: field.Tag.Get("ts"),
 		}
+
 		result.Fields = append(result.Fields, sfield)
 	}
 	return result
@@ -38,13 +41,17 @@ func GenerateTypeInfo(inst interface{}) *StructInfo {
 func DescribeStruct(w io.Writer, s *StructInfo) {
 	fmt.Fprintf(w, "interface %s { \n", TypescriptTypeName(s.Type))
 	for _, field := range s.Fields {
-		fmt.Fprintf(w, "    %s: %s;\n", field.Name, TypescriptTypeName(field.Type))
+		var tstype = field.CustomType
+		if tstype == "" {
+			tstype = TypescriptTypeName(field.Type)
+		}
+		fmt.Fprintf(w, "    %s: %s;\n", field.Name, tstype)
 	}
 	fmt.Fprintf(w, "}")
 }
 
 func main() {
-	var inst UserLoginInfo
+	var inst UserProfile
 	var typeInfo = GenerateTypeInfo(inst)
 	DescribeStruct(os.Stdout, typeInfo)
 }

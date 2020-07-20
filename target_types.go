@@ -10,7 +10,7 @@ type UserLoginInfo struct {
 
 type UserProfile struct {
 	LoginInfo UserLoginInfo
-	LastLogin time.Time
+	LastLogin time.Time `ts:"string"`
 	Bio string
 }
 
