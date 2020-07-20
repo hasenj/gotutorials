@@ -11,6 +11,7 @@ type UserLoginInfo struct {
 type UserProfile struct {
 	LoginInfo UserLoginInfo
 	LastLogin time.Time `ts:"string"`
+	Friends map[int]UserLoginInfo
 	Bio string
 }
 

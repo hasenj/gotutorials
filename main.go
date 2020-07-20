@@ -38,6 +38,12 @@ func TypescriptTypeName(t reflect.Type) string {
 		return "string"
 	case reflect.Bool:
 		return "boolean"
+	case reflect.Ptr:
+		return TypescriptTypeName(t.Elem())
+	case reflect.Slice, reflect.Array:
+		return TypescriptTypeName(t.Elem()) + "[]"
+	case reflect.Map:
+		return fmt.Sprintf("{ [key: %s]: %s }", TypescriptTypeName(t.Key()), TypescriptTypeName(t.Elem()))
 	default:
 		fmt.Println("WARNING: don't know what to output for type:", t.Name())
 		return "unknown"
@@ -56,8 +62,18 @@ func ProcessType(linker *TypeLinker, t reflect.Type) {
 		sfield.Type = field.Type
 		sfield.CustomType = field.Tag.Get("ts")
 
-		if sfield.CustomType == "" && sfield.Type.Kind() == reflect.Struct {
-			QueueType(linker, sfield.Type)
+		if sfield.CustomType == "" {
+			// see if we need to process another type referenced here directly or indirectly
+			// FIXME: maybe move this logic to QueueType
+			switch sfield.Type.Kind() {
+			case reflect.Struct:
+				QueueType(linker, sfield.Type)
+			case reflect.Ptr, reflect.Slice, reflect.Array:
+				QueueType(linker, sfield.Type.Elem())
+			case reflect.Map:
+				QueueType(linker, sfield.Type.Key())
+				QueueType(linker, sfield.Type.Elem())
+			}
 		}
 		sinfo.Fields = append(sinfo.Fields, sfield)
 	}
@@ -88,6 +104,9 @@ func QueueInstance(linker *TypeLinker, inst interface{}) {
 }
 
 func QueueType(linker *TypeLinker, t reflect.Type) {
+	if t.Kind() != reflect.Struct {
+		return
+	}
 	if linker.SeenTypes[t] {
 		return
 	}
