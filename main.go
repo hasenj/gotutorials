@@ -29,7 +29,19 @@ type StructFieldInfo struct {
 }
 
 func TypescriptTypeName(t reflect.Type) string {
-	return t.Name()
+	switch t.Kind() {
+	case reflect.Struct:
+		return t.Name()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return "number"
+	case reflect.String:
+		return "string"
+	case reflect.Bool:
+		return "boolean"
+	default:
+		fmt.Println("WARNING: don't know what to output for type:", t.Name())
+		return "unknown"
+	}
 }
 
 func ProcessType(linker *TypeLinker, t reflect.Type) {
