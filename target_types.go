@@ -3,21 +3,21 @@ package main
 import "time"
 
 type UserLoginInfo struct {
-	UserID int
-	Name string
+	UserID   int
+	Name     string
 	IsActive bool
 }
 
 type UserBasicInfo struct {
 	Email string
-	Bio string
+	Bio   string
 }
 
 type UserProfile struct {
 	UserLoginInfo
-	Basic UserBasicInfo
+	Basic     UserBasicInfo
 	LastLogin time.Time `ts:"string"`
-	Friends map[int]*UserLoginInfo
+	Friends   map[int]*UserLoginInfo
 }
 
 /*
