@@ -1,8 +1,8 @@
 package main
 
 import "os"
-
 import "time"
+import . "github.com/hasenj/gotutorials/ts_bridge"
 
 // Some example types to test the go-ts type bridge
 
@@ -25,9 +25,9 @@ type UserProfile struct {
 }
 
 func main() {
-	var bridge = ts_bridge.NewTypeBridge()
+	var bridge = NewTypeBridge()
 	var inst UserProfile
-	ts_bridge.QueueInstance(bridge, inst)
-	ts_bridge.Process(bridge)
-	ts_bridge.DescribeTypes(bridge, os.Stdout)
+	QueueInstance(bridge, inst)
+	Process(bridge)
+	DescribeTypes(bridge, os.Stdout)
 }

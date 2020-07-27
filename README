@@ -1,0 +1,9 @@
+Files here are for demonstration purposes and are not general purpose.
+
+If you would like to use this code in your project, copy the relevant code to your own project and modify it to suit your needs.
+
+Demos:
+
+- TS Bridge (Go Struct -> Typescript interface generator)
+
+    go run ./ts_bridge/demo
