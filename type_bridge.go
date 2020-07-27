@@ -27,7 +27,7 @@ type StructFieldInfo struct {
 	CustomType string
 }
 
-func TypescriptTypeName(t reflect.Type) string {
+func TSType(t reflect.Type) string {
 	switch t.Kind() {
 	case reflect.Struct:
 		return t.Name()
@@ -40,11 +40,13 @@ func TypescriptTypeName(t reflect.Type) string {
 	case reflect.Bool:
 		return "boolean"
 	case reflect.Ptr:
-		return TypescriptTypeName(t.Elem())
-	case reflect.Slice, reflect.Array:
-		return TypescriptTypeName(t.Elem()) + "[]"
+		return TSType(t.Elem())
+	case reflect.Array:
+		return TSType(t.Elem()) + "[]"
+	case reflect.Slice:
+		return TSType(t.Elem()) + "[] | null"
 	case reflect.Map:
-		return fmt.Sprintf("{ [key: %s]: %s }", TypescriptTypeName(t.Key()), TypescriptTypeName(t.Elem()))
+		return fmt.Sprintf("{ [key: %s]: %s } | null", TSType(t.Key()), TSType(t.Elem()))
 	default:
 		fmt.Println("WARNING: don't know what to output for type:", t.Name())
 		return "unknown"
@@ -80,11 +82,11 @@ func ProcessType(bridge *TypeBridge, t reflect.Type) {
 }
 
 func DescribeStruct(w io.Writer, s StructInfo) {
-	fmt.Fprintf(w, "interface %s { \n", TypescriptTypeName(s.Type))
+	fmt.Fprintf(w, "interface %s { \n", s.Type.Name())
 	for _, field := range s.Fields {
 		var tstype = field.CustomType
 		if tstype == "" {
-			tstype = TypescriptTypeName(field.Type)
+			tstype = TSType(field.Type)
 		}
 		fmt.Fprintf(w, "    %s: %s;\n", field.Name, tstype)
 	}
